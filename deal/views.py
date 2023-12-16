@@ -1,57 +1,56 @@
 from datetime import datetime
 import pytz
 
-from django.http import HttpResponse, JsonResponse
-from rest_framework.decorators import api_view
+from django.http import HttpResponse, JsonResponse, Http404
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from deal.models import Deal
 from deal.serializers import DealSerializer
 
 
-# Create your views here.
-@api_view(['GET', 'POST'])
-def deal_list(request):
-    if request.method == "GET":
+class DealList(APIView):
+
+    def get(self, request, format=None):
         deals = Deal.objects.all()
         serializer = DealSerializer(deals, many=True)
-        return Response(serializer.data, )
+        return Response(serializer.data)
 
-    if request.method == "POST":
-
-        timezone = pytz.timezone('Asia/Kolkata')
-
-        request.data["end_time"] = datetime.fromtimestamp(request.data.get("end_time"), timezone)
-        request.data["start_time"] = datetime.fromtimestamp(request.data.get("start_time"), timezone)
-
+    def post(self, request, format=None):
         serializer = DealSerializer(data=request.data)
-
+        import ipdb
+        ipdb.set_trace()
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['GET', 'PUT', 'DELETE'])
-def deal_detail(request, pk):
+def get_object(pk):
     try:
-        deal = Deal.objects.get(pk=pk)
+        return Deal.objects.get(pk=pk)
     except Deal.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
+        raise Http404
 
-    if request.method == "GET":
 
+class DealDetail(APIView):
+
+    def get(self, request, pk, format=None):
+        deal = get_object(pk)
         serializer = DealSerializer(deal)
-        return JsonResponse(serializer.data)
+        return Response(serializer.data)
 
-    elif request.method == 'PUT':
-        serializer = DealSerializer(Deal, data=request.data)
+    def put(self, request, pk, format=None):
+        deal = get_object(pk)
+        serializer = DealSerializer(deal, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    elif request.method == 'DELETE':
+    def delete(self, request, pk, format=None):
+        deal = get_object(pk)
         deal.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({'message': 'Deal successfully deleted'}, status=status.HTTP_204_NO_CONTENT)
+
