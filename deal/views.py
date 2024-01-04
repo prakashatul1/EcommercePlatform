@@ -19,7 +19,14 @@ class DealList(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
 
     def get(self, request, format=None):
-        deals = Deal.objects.all()
+        query_params = request.query_params
+
+        count_lte = query_params.get('allah', None)
+        if count_lte:
+            deals = Deal.objects.filter(item_count__lte=count_lte)
+        else:
+            deals = Deal.objects.all()
+
         serializer = DealSerializer(deals, many=True)
         return Response(serializer.data)
 
