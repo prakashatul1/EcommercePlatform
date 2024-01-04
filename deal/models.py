@@ -9,11 +9,12 @@ class Deal(models.Model):
     name = models.CharField(max_length=100)
     item_count = models.PositiveIntegerField(default=0, validators=[MinValueValidator(0)])
     item_sold = models.IntegerField(default=0, validators=[MinValueValidator(1)])
-    deal_price = models.DecimalField(default=0)
+    deal_price = models.DecimalField(default=0, decimal_places=2, max_digits=99999)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
     created = models.DateTimeField(auto_now_add=True)
     active = models.BooleanField(default=True)
+    owner = models.ForeignKey('auth.user', on_delete=models.CASCADE)
 
     def is_active(self):
         return self.active and self.start_time <= timezone.now() <= self.end_time and self.item_sold < self.item_count

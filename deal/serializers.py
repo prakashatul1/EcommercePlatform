@@ -1,12 +1,12 @@
 from datetime import datetime
 
+from django.contrib.auth.models import User
 from django.utils.timezone import make_aware, now
 from rest_framework import serializers
 from deal.models import Deal
 
 
 class DealSerializer(serializers.Serializer):
-
     # def __init__(self, *args, **kwargs):
     #     super(DealSerializer, self).__init__(*args, **kwargs)
     #
@@ -16,11 +16,12 @@ class DealSerializer(serializers.Serializer):
     #         self.fields['start_time'].required = False
 
     id = serializers.IntegerField(read_only=True)
-    name = serializers.CharField(read_only=True, max_length=100)
+    name = serializers.CharField(max_length=100)
     item_count = serializers.IntegerField(default=0)
     deal_price = serializers.IntegerField(read_only=True)
-    start_time = serializers.DateTimeField(read_only=True)
+    start_time = serializers.DateTimeField()
     end_time = serializers.DateTimeField()
+    owner = serializers.ReadOnlyField(source='owner.username')
 
     def create(self, validated_data):
         return Deal.objects.create(**validated_data)
@@ -28,7 +29,7 @@ class DealSerializer(serializers.Serializer):
     def update(self, instance, validated_data):
         instance.item_count = validated_data.get('item_count', instance.item_count)
         instance.deal_price = validated_data.get('deal_price', instance.deal_price)
-        instance.end_time = validated_data.get('end_time', instance.name)
+        instance.end_time = validated_data.get('end_time', instance.end_time)
 
         instance.save()
         return instance
@@ -77,3 +78,20 @@ class DealSerializer(serializers.Serializer):
             })
 
         return data
+
+
+class UserSerializer(serializers.ModelSerializer):
+
+    deals = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'deals']
+
+    def get_deals(self, obj):
+
+        user = self.context['request'].user
+        if user.is_authenticated:
+            deals = Deal.objects.filter(owner=user)
+            return DealSerializer(deals, many=True).data
+        return []
