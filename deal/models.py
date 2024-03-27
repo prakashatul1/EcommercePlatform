@@ -24,3 +24,6 @@ class Claim(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     deal = models.ForeignKey(Deal, on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'deal')

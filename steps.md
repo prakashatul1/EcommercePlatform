@@ -4,7 +4,7 @@
 #### python manage.py createsuperuser
 #### INSTALLED_APPS = [
     ...
-    'rest_framework',
+    'rest_framework',   
     '<app name>',
 ]
 #### create your models app
